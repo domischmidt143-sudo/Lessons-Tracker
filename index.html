@@ -41,7 +41,7 @@ body {
 
 .topic {
     display: grid;
-    grid-template-columns: 24px 1fr;
+    grid-template-columns: 24px 1fr 24px;
     gap: 12px;
     align-items: center;
 }
@@ -73,7 +73,26 @@ body {
     opacity: 0.7;
 }
 
-/* ===== DODAWANIE TEMATU ===== */
+/* ===== KOSZ ===== */
+.delete-btn {
+    opacity: 0;
+    cursor: pointer;
+    font-size: 16px;
+    text-align: center;
+    transition: 0.2s;
+    user-select: none;
+}
+
+.topic:hover .delete-btn {
+    opacity: 0.8;
+}
+
+.delete-btn:hover {
+    opacity: 1;
+    transform: scale(1.2);
+}
+
+/* ===== DODAWANIE ===== */
 .add-row {
     display: grid;
     grid-template-columns: 1fr 40px;
@@ -137,15 +156,12 @@ const input = document.getElementById("topicInput");
 
 const STORAGE_KEY = "student_topics_widget";
 
-/* ===== Wczytaj zapisane ===== */
 let topics = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
-/* ===== Zapisz ===== */
 function saveTopics() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(topics));
 }
 
-/* ===== Render ===== */
 function renderTopics() {
     topicList.innerHTML = "";
 
@@ -168,14 +184,25 @@ function renderTopics() {
         const span = document.createElement("span");
         span.textContent = topic.text;
 
+        /* ===== KOSZ ===== */
+        const deleteBtn = document.createElement("div");
+        deleteBtn.className = "delete-btn";
+        deleteBtn.textContent = "🗑";
+
+        deleteBtn.addEventListener("click", () => {
+            topics.splice(index, 1);
+            saveTopics();
+            renderTopics();
+        });
+
         div.appendChild(checkbox);
         div.appendChild(span);
+        div.appendChild(deleteBtn);
 
         topicList.appendChild(div);
     });
 }
 
-/* ===== Dodaj temat ===== */
 function addTopic() {
     const text = input.value.trim();
     if (!text) return;
@@ -192,7 +219,6 @@ function addTopic() {
 
 addBtn.addEventListener("click", addTopic);
 
-/* Enter też dodaje */
 input.addEventListener("keypress", e => {
     if (e.key === "Enter") addTopic();
 });
