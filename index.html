@@ -1,185 +1,203 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-<meta charset="UTF-8" />
-<title>Uczeń – Tematy</title>
+<meta charset="UTF-8">
+<title>Student Topics Widget</title>
 
 <style>
-body{
-    background:#0f1117;
-    font-family: system-ui, -apple-system, sans-serif;
+body {
+    background: #191919;
+    font-family: Inter, sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 40px;
+    color: white;
 }
 
-/* === KARTA === */
-.widget{
-    width:320px;
-    background:#1a1d24;
-    border-radius:22px;
-    padding:22px;
-    color:white;
-    box-shadow:0 10px 30px rgba(0,0,0,0.35);
+.widget {
+    width: 420px;
 }
 
-/* === IMIĘ UCZNIA === */
-.student-name{
-    color:#ff006b;
-    font-size:20px;
-    font-weight:700;
-    margin-bottom:18px;
+.card {
+    background: #000000;
+    border-radius: 18px;
+    padding: 20px;
+    box-shadow: 0 0 25px rgba(0,0,0,0.6);
 }
 
-/* === LISTA TEMATÓW === */
-.tasks{
-    display:flex;
-    flex-direction:column;
-    gap:12px;
+.student-name {
+    color: #ff006b;
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 18px;
+    text-align: left;
 }
 
-/* === POJEDYNCZY TEMAT === */
-.task{
-    display:flex;
-    align-items:center;
-    gap:12px;
+.topic-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
-/* === CHECKBOX === */
-.checkbox{
-    width:18px;
-    height:18px;
-    border:2px solid #ff006b;
-    border-radius:5px;
-    cursor:pointer;
-    flex-shrink:0;
+.topic {
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    gap: 12px;
+    align-items: center;
 }
 
-.checkbox.checked{
-    background:#ff006b;
+.topic input[type="checkbox"] {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #ff006b;
+    border-radius: 4px;
+    cursor: pointer;
 }
 
-/* === TEKST === */
-.task-text{
-    flex:1;
+.topic input[type="checkbox"]:checked {
+    background: #ff006b;
+}
+
+.topic span {
     word-break: break-word;
-    line-height:1.35;
+    line-height: 1.4;
+    display: flex;
+    align-items: center;
 }
 
-.task-text.checked{
+.topic.done span {
     text-decoration: line-through;
-    text-decoration-color:#ff006b;
+    text-decoration-color: #ff006b;
+    text-decoration-thickness: 2px;
+    opacity: 0.7;
 }
 
-/* === USUWANIE === */
-.delete{
-    opacity:0.5;
-    cursor:pointer;
-    font-size:14px;
+/* ===== DODAWANIE TEMATU ===== */
+.add-row {
+    display: grid;
+    grid-template-columns: 1fr 40px;
+    gap: 10px;
+    margin-top: 18px;
 }
 
-.delete:hover{
-    opacity:1;
+.add-input {
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 10px;
+    padding: 10px;
+    color: white;
+    outline: none;
 }
 
-/* === ADD BUTTON === */
-.add-task{
-    margin-top:12px;
-    opacity:0.6;
-    cursor:pointer;
+.add-input::placeholder {
+    color: #666;
 }
 
-.add-task:hover{
-    opacity:1;
+.add-btn {
+    background: #ff006b;
+    border: none;
+    color: black;
+    font-weight: bold;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 20px;
 }
 </style>
 </head>
 
-
 <body>
 
 <div class="widget">
+    <div class="card">
 
-    <!-- ✏️ TU WPISUJESZ UCZNIA -->
-    <div class="student-name">
-        Kamila Olszewska
+        <!-- TU WPISUJESZ UCZNIA -->
+        <div class="student-name">
+            Kamila Olszewska
+        </div>
+
+        <div class="topic-list" id="topicList"></div>
+
+        <div class="add-row">
+            <input 
+                class="add-input"
+                id="topicInput"
+                placeholder="Add topic..."
+            >
+            <button class="add-btn" id="addTopicBtn">+</button>
+        </div>
+
     </div>
-
-    <div class="tasks" id="tasks"></div>
-
-    <div class="add-task" id="addTask">
-        + add topic
-    </div>
-
 </div>
 
-
 <script>
-const STORAGE_KEY = "student_topics_v1";
+const topicList = document.getElementById("topicList");
+const addBtn = document.getElementById("addTopicBtn");
+const input = document.getElementById("topicInput");
 
-const tasksContainer = document.getElementById("tasks");
-const addBtn = document.getElementById("addTask");
+const STORAGE_KEY = "student_topics_widget";
 
-/* === SAVE === */
-function save(){
-    const data = [...document.querySelectorAll(".task")].map(task => ({
-        text: task.querySelector(".task-text").textContent,
-        checked: task.querySelector(".checkbox").classList.contains("checked")
-    }));
+/* ===== Wczytaj zapisane ===== */
+let topics = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+/* ===== Zapisz ===== */
+function saveTopics() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(topics));
 }
 
-/* === LOAD === */
-function load(){
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+/* ===== Render ===== */
+function renderTopics() {
+    topicList.innerHTML = "";
+
+    topics.forEach((topic, index) => {
+
+        const div = document.createElement("div");
+        div.className = "topic";
+        if (topic.done) div.classList.add("done");
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = topic.done;
+
+        checkbox.addEventListener("change", () => {
+            topics[index].done = checkbox.checked;
+            saveTopics();
+            renderTopics();
+        });
+
+        const span = document.createElement("span");
+        span.textContent = topic.text;
+
+        div.appendChild(checkbox);
+        div.appendChild(span);
+
+        topicList.appendChild(div);
+    });
 }
 
-/* === CREATE TASK === */
-function createTask(text, checked=false){
+/* ===== Dodaj temat ===== */
+function addTopic() {
+    const text = input.value.trim();
+    if (!text) return;
 
-    const task = document.createElement("div");
-    task.className = "task";
+    topics.push({
+        text: text,
+        done: false
+    });
 
-    const checkbox = document.createElement("div");
-    checkbox.className = "checkbox";
-    if(checked) checkbox.classList.add("checked");
-
-    const taskText = document.createElement("div");
-    taskText.className = "task-text";
-    taskText.textContent = text;
-    if(checked) taskText.classList.add("checked");
-
-    const del = document.createElement("div");
-    del.className = "delete";
-    del.textContent = "✕";
-
-    checkbox.onclick = () => {
-        checkbox.classList.toggle("checked");
-        taskText.classList.toggle("checked");
-        save();
-    };
-
-    del.onclick = () => {
-        task.remove();
-        save();
-    };
-
-    task.append(checkbox, taskText, del);
-    tasksContainer.appendChild(task);
+    input.value = "";
+    saveTopics();
+    renderTopics();
 }
 
-/* === ADD BUTTON === */
-addBtn.addEventListener("click", () => {
-    const text = prompt("Wpisz temat:");
-    if(!text) return;
-    createTask(text);
-    save();
+addBtn.addEventListener("click", addTopic);
+
+/* Enter też dodaje */
+input.addEventListener("keypress", e => {
+    if (e.key === "Enter") addTopic();
 });
 
-/* === INIT === */
-function init(){
-    load().forEach(t => createTask(t.text, t.checked));
-}
-
-init();
+renderTopics();
 </script>
 
 </body>
