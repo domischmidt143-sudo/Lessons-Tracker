@@ -126,17 +126,14 @@ const studentName = document.getElementById("studentName");
 
 let topics = [];
 
-/* ===== INSTANCJA WIDGETU (OSOBNA NA EMBED) ===== */
-let instanceId = sessionStorage.getItem("widgetInstanceId");
+/* ===== INSTANCE ID Z URL ===== */
+const params = new URLSearchParams(window.location.search);
+let instanceId = params.get("id") || "default";
 
-if (!instanceId) {
-  instanceId = crypto.randomUUID();
-  sessionStorage.setItem("widgetInstanceId", instanceId);
-}
-
+/* ===== STORAGE KEY ===== */
 const STORAGE_KEY = "tutoringWidgetData_" + instanceId;
 
-/* ===== LOCAL STORAGE DANYCH ===== */
+/* ===== LOCAL STORAGE ===== */
 function saveData() {
   const data = {
     name: studentName.innerText,
@@ -198,15 +195,10 @@ function renderTopics() {
 /* ===== ADD TOPIC ===== */
 topicInput.addEventListener("keydown", e => {
   if (e.key === "Enter") {
-
     const text = topicInput.value.trim();
     if (!text) return;
 
-    topics.push({
-      text,
-      done: false
-    });
-
+    topics.push({ text, done: false });
     topicInput.value = "";
     saveData();
     renderTopics();
